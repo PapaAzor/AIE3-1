@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css" type="text/css" />
+    
+    <title>Robot Control</title>
+    
+</head>
+<body>
+    <div id="logo" >
+        <h1>Robot Control</h1>
+    </div>
+    
+    <div id="container">
+        <div id="map">
+           
+        </div>
+        <div id="stream">
+            <h1>Video stream</h1>
+        </div>
+    </div>
+    <div id="startPos">
+        <h1>Select start position</h1>
+        <label for="x-pos">X:</label>
+        <input type="number" id="x-pos" min="0" max="9" required>
+        <label for="y-pos">Y:</label>
+        <input type="number" id="y-pos" min="0" max="9" required>
+        <button onclick="setStartingPosition()">Set Position</button>
+    </div>
+    <div id='test'>
+        <h1>Reset variables routes itd.</h1>
+        <button onclick="reset()">Reset</button>
+    </div>
+    
+    <script>
+        
+        //Dynamic sizes, only container works tho idk why
+        var devWidth = window.screen.width;
+        document.getElementById('container').style.width = devWidth + 'px';        
+        var containerWidth = parseInt(document.getElementById('container').style.width);
+        document.getElementById('map').style.width = containerWidth / 2 + 'px';
+        document.getElementById('stream').style.width = containerWidth / 2 + 'px';
+
+
+
+        // 10x10grid of buttons
+        const mapElement = document.getElementById('map');
+        const buttons =[];
+        for (let row = 0; row < 10; row++) {
+            buttons[row]=[];
+            for (let col = 0; col < 10; col++) {
+                const button = document.createElement('button');
+                button.classList.add('grid-button');
+                button.textContent = `${row},${col}`; 
+                button.addEventListener('click', () => move(`${row},${col}`)); // Set on click function
+                mapElement.appendChild(button);
+                buttons[row][col]=button;
+            }
+        }
+
+
+        let startingPos=[null,null]
+        function setStartingPosition(){
+            const x = parseInt(document.getElementById('x-pos').value);
+            const y = parseInt(document.getElementById('y-pos').value);
+            //starting x y coordinates
+            if(x!=='' && y!==''){
+                startingPos=[x,y];
+                const startingButton=buttons[x][y];
+                startingButton.style.backgroundColor='lightblue';
+                
+                
+
+                 fetch(`/setStartingPosition/${startingPos[0]},${startingPos[1]}`)
+                .then(response => response.text()) // Convert the response to text
+                .then(data => {
+                console.log(data); 
+                
+            })
+            }
+        }
+        function move(endpoint) {
+            const [x, y] = endpoint.split(',').map(Number);//finding x y coordinates
+            const movingButton = buttons[x][y];//finding the button with that coordinates
+            movingButton.style.backgroundColor='green';
+
+            fetch(`/move/${endpoint}`)//send request to a route
+                .then(response => response.text())//convert the response
+                .then(data => { //with that response:
+                    console.log(data); //check the data from the server
+                    alert(`Moving to ${endpoint}`); // display that data
+                })
+                
+        }
+        function reset(){
+            let startingPos=[null,null]//only global for now
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 10; col++) {
+                    buttons[row][col].style.backgroundColor = 'lightgray';//for testing
+                }
+            }
+        } 
+        function findWat(){
+            //here implement the algorithm to find path
+        }
+    </script>
+    
+</body>
+</html>
