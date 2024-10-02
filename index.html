@@ -109,10 +109,7 @@
                 
                 resetSet = 1; 
             }
-    
-           // alert(`Reset set to ${resetSet}`);
-            
-            
+        
             fetch(`/reset/${resetSet}`)
                 .then(response => response.text()) 
                 .then(data => {
