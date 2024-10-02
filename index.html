@@ -34,7 +34,7 @@
         <button onclick="reset()">Reset</button>
     </div>
     
-    <script>
+    <script> 
         
         //Dynamic sizes, only container works tho idk why
         var devWidth = window.screen.width;
@@ -86,6 +86,8 @@
             const movingButton = buttons[x][y];//finding the button with that coordinates
             movingButton.style.backgroundColor='green';
 
+            //Implement some constrains so that the same point can be chose twice
+
             fetch(`/move/${endpoint}`)//send request to a route
                 .then(response => response.text())//convert the response
                 .then(data => { //with that response:
@@ -94,15 +96,33 @@
                 })
                 
         }
-        function reset(){
-            let startingPos=[null,null]//only global for now
-            for (let row = 0; row < 10; row++) {
-                for (let col = 0; col < 10; col++) {
-                    buttons[row][col].style.backgroundColor = 'lightgray';//for testing
+        
+        function reset(resetSet) {
+            if (startingPos[0] !== null && startingPos[1] !== null && resetSet !== 1) {
+                startingPos = [null, null]; 
+    
+                for (let row = 0; row < 10; row++) {
+                    for (let col = 0; col < 10; col++) {
+                        buttons[row][col].style.backgroundColor = 'lightgray'; 
+                    }
                 }
+                
+                resetSet = 1; 
             }
-        } 
-        function findWat(){
+    
+           // alert(`Reset set to ${resetSet}`);
+            
+            
+            fetch(`/reset/${resetSet}`)
+                .then(response => response.text()) 
+                .then(data => {
+                    console.log(data); 
+                    //alert(`Server responded: ${data}`);
+                })
+                .catch(error => console.error('Error:', error)); // Catch any errors
+                resetSet=0;
+            }
+        function findWay(){
             //here implement the algorithm to find path
         }
     </script>
