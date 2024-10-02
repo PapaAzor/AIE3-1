@@ -18,10 +18,12 @@ def send_command(command):
 #            s.connect((ROBOT_IP, ROBOT_PORT))
 #            s.sendall(command.encode('utf-8'))
 
-    print(f"Simulating sending command: {command}")
+    #print(f"Simulating sending command: {command}")
+    pass
 
 startSet=False
 endSet=False
+resetSet=False
 endPoint=[0,0]
 startPoint=[0,0]
 
@@ -33,7 +35,7 @@ def move(endpoint):
     endSet=True
     
     send_command(endpoint)
-    print("Received data:", endpoint) 
+    #print("Received data:", endpoint) 
     findingWay(startPoint,endPoint)
     return {"status": "success", "message": f"Command received: {endpoint}"}, 200 
     
@@ -46,7 +48,7 @@ def setStartingPosition(coordinates):
     startSet= True
     x, y = coordinates.split(',')
     findingWay(startPoint,endPoint)
-    print(f"Starting position received: ", coordinates)
+    #print(f"Starting position received: ", coordinates)
     return f"Starting position set to ({x}, {y})"
 
 
@@ -54,15 +56,33 @@ def findingWay(start,end):
     if(startSet==True and endSet==True):
         print("Need to find way from: ",startPoint," to: ",endPoint)
     else :
-        print("endpoint:", endPoint)
-        print(endSet)
-        print("starPoint: ",startPoint)
-        print(startSet)
+        #print("endpoint:", endPoint)
+        #print(endSet)
+        #print("starPoint: ",startPoint)
+        #print(startSet)
+        pass
     
 
 #reset function
+@app.route('/reset/<resetSet>')
+def reset(resetSet):
+    global startSet
+    global startPoint
+    global endSet
+    global endPoint
+    print(f"received reset request with : {resetSet}")
+    
+    endPoint=[0,0]
+    startPoint=[0,0]
+    startSet=False
+    endSet=False
+    resetSet=0
+    print("stratpoint:",startSet)
+    print("endpoint:",endSet)
+    return f"Reset set to {resetSet}"
 
-
+    
+    
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
