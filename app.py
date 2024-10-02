@@ -77,12 +77,10 @@ def reset(resetSet):
     startSet=False
     endSet=False
     resetSet=0
-    print("stratpoint:",startSet)
-    print("endpoint:",endSet)
+    #print("stratpoint:",startSet)
+    #print("endpoint:",endSet)
     return f"Reset set to {resetSet}"
-
-    
-    
+  
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
