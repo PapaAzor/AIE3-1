@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 // Not all of those libraries are necessary , but I dont remember which
-#define PORT 65432  // Define the port for TCP connection
+#define PORT 8000  // Define the port for TCP connection
 
 int sock = 0;
 struct sockaddr_in serv_addr;
