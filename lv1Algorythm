@@ -5,17 +5,17 @@ tar_y=3 #target y position
 
 
 
-while cur_x!=tar_x:
-    while cur_y!=tar_y:
-        if tar_y>cur_y:
+while cur_x!=tar_x: #as long as the x positions are different
+    while cur_y!=tar_y:#as long as the y positions are different
+        if tar_y>cur_y:#if target is higer than current position
             print("up")
-            cur_y+=1
-        if tar_y<cur_y:
+            cur_y+=1#increase current position
+        if tar_y<cur_y:#if target is lower than current position
             print("down")
-            cur_y-=1  
-    if tar_x>cur_x:
+            cur_y-=1 #decrease current position 
+    if tar_x>cur_x:#if target is higer than current position
             print("right")
-            cur_x+=1
-    if tar_x<cur_x:
+            cur_x+=1#increase current position
+    if tar_x<cur_x:#if target is lower than current position
             print("left")
-            cur_x-=1
+            cur_x-=1#decrease current position
