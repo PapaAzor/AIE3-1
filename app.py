@@ -1,10 +1,22 @@
-from flask import Flask, render_template
+from flask import Flask, render_template,jsonify, request, g #json for convertion, request obvious and g for storing data(typically databvase)
 import socket
+import sqlite3
 
 app = Flask(__name__)
 
 ROBOT_IP = '192.168.0.100'  #example
 ROBOT_PORT = 8000  #port for the TCP server
+
+def get_db():
+    if 'db' not in g:
+        g.db=sqlite3.connect("sia.db")
+        return g.db 
+    
+@app.teardown_appcontext#func called after every request (event if there was an error)
+def close_db(exception): #Exception because of a standard practice
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 @app.route('/')
 def index():
@@ -77,10 +89,31 @@ def reset(resetSet):
     startSet=False
     endSet=False
     resetSet=0
-    #print("stratpoint:",startSet)
-    #print("endpoint:",endSet)
+    print("stratpoint:",startSet)
+    print("endpoint:",endSet)
     return f"Reset set to {resetSet}"
   
+@app.route('/scan_qr/<qr_code>')
+def scan_qr(qr_code):
+    db = get_db()
+    cursor = db.cursor() # something that allows interaction with the database
+    
+    cursor.execute('SELECT shape, x_position, y_position FROM qr_positions WHERE qr_data = ?', (qr_code,))
+    result = cursor.fetchone()
+
+    if result:
+        shape, x_pos, y_pos = result
+        return jsonify({
+            'status': 'success',
+            'shape': shape,
+            'x_position': x_pos,
+            'y_position': y_pos
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': 'QR code not found'
+        }), 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
