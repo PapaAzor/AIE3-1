@@ -1,0 +1,21 @@
+cur_x=1 #current x position 
+cur_y=1 #current y position 
+tar_x=5 #target x position
+tar_y=3 #target y position
+
+
+
+while cur_x!=tar_x:
+    while cur_y!=tar_y:
+        if tar_y>cur_y:
+            print("up")
+            cur_y+=1
+        if tar_y<cur_y:
+            print("down")
+            cur_y-=1  
+    if tar_x>cur_x:
+            print("right")
+            cur_x+=1
+    if tar_x<cur_x:
+            print("left")
+            cur_x-=1
