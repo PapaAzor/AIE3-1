@@ -93,27 +93,7 @@ def reset(resetSet):
     print("endpoint:",endSet)
     return f"Reset set to {resetSet}"
   
-@app.route('/scan_qr/<qr_code>')
-def scan_qr(qr_code):
-    db = get_db()
-    cursor = db.cursor() # something that allows interaction with the database
-    
-    cursor.execute('SELECT shape, x_position, y_position FROM qr_positions WHERE qr_data = ?', (qr_code,))
-    result = cursor.fetchone()
 
-    if result:
-        shape, x_pos, y_pos = result
-        return jsonify({
-            'status': 'success',
-            'shape': shape,
-            'x_position': x_pos,
-            'y_position': y_pos
-        })
-    else:
-        return jsonify({
-            'status': 'error',
-            'message': 'QR code not found'
-        }), 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
