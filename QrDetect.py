@@ -43,20 +43,21 @@ def qr_func(ret,frame):
                 if s:
                     
                     result=scan_qr(s)
-                    color = (0, 255, 0)
+                    
                     if result:
                         shape, x_pos, y_pos = result
-                        print(f"Shape: {shape}, X: {x_pos}, Y: {y_pos}")
+                        #print(f"Shape: {shape}, X: {x_pos}, Y: {y_pos}")
+                        return x_pos,y_pos
                     
-                else:
-                    color = (0, 0, 255)
-                frame = cv2.polylines(frame, [p.astype(int)], True, color, 8)    
+                 
 
 get_db()
 while True:
     
     ret, frame = cam.read()
     qr_func(ret,frame)
+    #print(qr_func(ret,frame))
+    
     cv2.imshow(window_name, frame)
 
     if cv2.waitKey(delay) & 0xFF == ord('q'):
