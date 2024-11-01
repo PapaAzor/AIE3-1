@@ -8,7 +8,7 @@
 
 
 
-#define PWM_RANGE 200
+#define PWM_RANGE 250
 #define PORT 8000  
 
 
@@ -66,12 +66,13 @@ void *tcp_server_thread_function(void *arg) {
     return NULL;
 }
 
-void *camera_thread_function(void *arg){
+ void *camera_thread_function(void *arg){
 	
 	system(" rpicam-vid -t 0 -n --framerate 40 --saturation 0 --denoise cdn_fast --contrast 0.2 --sharpness 0.1 --inline -o - | gst-launch-1.0 fdsrc fd=0 ! udpsink host=10.45.0.1 port=6433");
 	//change the protocol
     return NULL;
 	}
+
 int main() {
     setup();
 	
