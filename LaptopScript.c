@@ -4,11 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <wiringPi.h>
+
+//#include <wiringPi.h>
 
 
 
-#define PWM_RANGE 250
+//#define PWM_RANGE 250
 #define PORT 8000  
 
 
@@ -20,12 +21,15 @@ char buffer[1024] = {0};
 
 void setup() {
     // Initialize WiringPi
-    wiringPiSetupGpio();  
+    //wiringPiSetupGpio();  
     // Set PWM mode as mark-space
-    pwmSetMode(PWM_MODE_MS); 
-    pwmSetRange(PWM_RANGE);  
+   // pwmSetMode(PWM_MODE_MS); 
+   // pwmSetRange(PWM_RANGE);  
     // Set PWM clock divisor for 100 kHz 
-    pwmSetClock(192);     
+   // pwmSetClock(192);   
+	
+
+	
     // Initialize TCP server
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
@@ -49,7 +53,7 @@ void setup() {
     }
 
     printw("Server is listening on port %d\n", PORT);
-    refresh();
+    //refresh();
 }
 
 
