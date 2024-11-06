@@ -5,32 +5,16 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-//#include <wiringPi.h>
-
-
-
-//#define PWM_RANGE 250
-#define PORT 8000  
-
-
+#define PORT 8000
+#define BUFFER_SIZE 1024  // Define BUFFER_SIZE
 
 int server_fd, new_socket;
 struct sockaddr_in address;
 int addrlen = sizeof(address);
-char buffer[1024] = {0};
+char buffer[BUFFER_SIZE] = {0};
+int sock = 0;
 
 void setup() {
-    // Initialize WiringPi
-    //wiringPiSetupGpio();  
-    // Set PWM mode as mark-space
-   // pwmSetMode(PWM_MODE_MS); 
-   // pwmSetRange(PWM_RANGE);  
-    // Set PWM clock divisor for 100 kHz 
-   // pwmSetClock(192);   
-	
-
-	
-    // Initialize TCP server
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
@@ -52,12 +36,23 @@ void setup() {
         exit(EXIT_FAILURE);
     }
 
-    printw("Server is listening on port %d\n", PORT);
-    //refresh();
+    printf("Server is listening on port %d\n", PORT);
 }
 
 
 
+char getch() {
+    char ch;
+    read(STDIN_FILENO, &ch, 1);  // Read a single character
+    return ch;
+}
+
+// Function to send a command to the server
+void send_command(const char *command) {
+    send(sock, command, strlen(command), 0);  // Send command to server
+}
+
+// Thread function to handle TCP connections and read commands
 void *tcp_server_thread_function(void *arg) {
     while (1) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
@@ -65,48 +60,70 @@ void *tcp_server_thread_function(void *arg) {
             continue;
         }
 
-        
+        // Read the incoming command from the client
+        int valread[10];  // Array to store the number of bytes read for each command
+
+for (int i = 0; i < 10; i++) {  // Loop without going out of bounds
+    valread[i] = read(new_socket, buffer, BUFFER_SIZE);  // Read from socket into buffer
+
+    if (valread[i] > 0) {
+        // Safely null-terminate the buffer
+        if (valread[i] < BUFFER_SIZE) {
+            buffer[valread[i]] = '\0';  // Null-terminate after the last byte read
+        } else {
+            buffer[BUFFER_SIZE - 1] = '\0';  // Null-terminate at buffer limit
+        }
+
+        // Print each character in the buffer separately
+        printf("Received command: ");
+        for (int j = 0; j < valread[i]; j++) {
+            printf("%c\n", buffer[j]);  
+				if(buffer[j]=='u'){
+					printf("Going Up");
+					}
+				if(buffer[j]=='d'){
+					printf("Going Down");
+					}
+				if(buffer[j]=='l'){
+					printf("Going Left");
+					}
+				if(buffer[j]=='r'){
+					printf("Going Right");
+					}
+        }
+    } else if (valread[i] == 0) {
+        printf("Client disconnected.\n");
+        break;  // Exit the loop if the client has disconnected
+    } else {
+        perror("read failed");
+        break;  // Exit the loop on read failure
+    }
+}
+
+
+        // Close the client connection
+        close(new_socket);
     }
     return NULL;
 }
 
- void *camera_thread_function(void *arg){
-	
-	system(" rpicam-vid -t 0 -n --framerate 40 --saturation 0 --denoise cdn_fast --contrast 0.2 --sharpness 0.1 --inline -o - | gst-launch-1.0 fdsrc fd=0 ! udpsink host=10.45.0.1 port=6433");
-	//change the protocol
-    return NULL;
-	}
-
 int main() {
     setup();
-	
-    pthread_t  tcp_server_thread,camera_thread; //
-
     
+    pthread_t tcp_server_thread;
 
     // Create thread for TCP server
     if (pthread_create(&tcp_server_thread, NULL, tcp_server_thread_function, NULL) != 0) {
         fprintf(stderr, "Error creating TCP server thread\n");
         return 1;
     }
-    if (pthread_create(&camera_thread, NULL, camera_thread_function, NULL) != 0) {
-        fprintf(stderr, "Error creating camera thread\n");
-        return 1;
-    } 
 
-    // Wait for the threads to finish
-   
+    // Wait for the thread to finish
     if (pthread_join(tcp_server_thread, NULL) != 0) {
         fprintf(stderr, "Error joining TCP server thread\n");
         return 1;
     }
-    if (pthread_join(camera_thread, NULL) != 0) {
-        fprintf(stderr, "Error joining camera thread\n");
-        return 1;
-    } 
-    
 
-   
     close(server_fd);
     return 0;
 }
