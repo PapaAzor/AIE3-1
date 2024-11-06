@@ -39,15 +39,6 @@ void setup() {
     printf("Server is listening on port %d\n", PORT);
 }
 
-
-
-char getch() {
-    char ch;
-    read(STDIN_FILENO, &ch, 1);  // Read a single character
-    return ch;
-}
-
-// Function to send a command to the server
 void send_command(const char *command) {
     send(sock, command, strlen(command), 0);  // Send command to server
 }
@@ -59,27 +50,23 @@ void *tcp_server_thread_function(void *arg) {
             perror("accept");
             continue;
         }
-
-        // Read the incoming command from the client
-        int valread[10];  // Array to store the number of bytes read for each command
-
-for (int i = 0; i < 10; i++) {  // Loop without going out of bounds
-    valread[i] = read(new_socket, buffer, BUFFER_SIZE);  // Read from socket into buffer
-
-    if (valread[i] > 0) {
-        // Safely null-terminate the buffer
-        if (valread[i] < BUFFER_SIZE) {
-            buffer[valread[i]] = '\0';  // Null-terminate after the last byte read
-        } else {
-            buffer[BUFFER_SIZE - 1] = '\0';  // Null-terminate at buffer limit
-        }
+	int valread[10];  
+	for (int i = 0; i < 10; i++) {  
+		valread[i] = read(new_socket, buffer, BUFFER_SIZE);  
+		if (valread[i] > 0) {      
+			if (valread[i] < BUFFER_SIZE) {
+				buffer[valread[i]] = '\0';  // Null-terminate after the last byte read
+			} 
+			else {
+				buffer[BUFFER_SIZE - 1] = '\0';  // Null-terminate at buffer limit
+				}	
 
         // Print each character in the buffer separately
         printf("Received command: ");
         for (int j = 0; j < valread[i]; j++) {
             printf("%c\n", buffer[j]);  
-				if(buffer[j]=='u'){
-					printf("Going Up");
+			if(buffer[j]=='u'){
+				printf("Going Up");
 					}
 				if(buffer[j]=='d'){
 					printf("Going Down");
@@ -91,17 +78,16 @@ for (int i = 0; i < 10; i++) {  // Loop without going out of bounds
 					printf("Going Right");
 					}
         }
-    } else if (valread[i] == 0) {
+    } 
+    else if (valread[i] == 0) {
         printf("Client disconnected.\n");
         break;  // Exit the loop if the client has disconnected
-    } else {
+    } 
+    else {
         perror("read failed");
         break;  // Exit the loop on read failure
     }
 }
-
-
-        // Close the client connection
         close(new_socket);
     }
     return NULL;
