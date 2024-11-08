@@ -1,99 +1,91 @@
-from flask import Flask, render_template,jsonify, request, g #json for convertion, request obvious and g for storing data(typically databvase)
+from flask import Flask, render_template, jsonify, request, g
 import socket
 import sqlite3
 
 app = Flask(__name__)
 
-ROBOT_IP = '192.168.0.100'  #example
-ROBOT_PORT = 8000  #port for the TCP server
+# TCP configuration for the C server
+TCP_IP = '192.168.28.196'  # IP for the C server
+ROBOT_PORT = 8000          # Port for the C server
+
+# Database configuration
+DATABASE = "sia.db"
 
 def get_db():
-    if 'db' not in g:
-        g.db=sqlite3.connect("sia.db")
-        return g.db 
     
-@app.teardown_appcontext#func called after every request (event if there was an error)
-def close_db(exception): #Exception because of a standard practice
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE)
+    return g.db
+
+@app.teardown_appcontext
+def close_db(exception):
+    """Close the database connection after request."""
     db = g.pop('db', None)
     if db is not None:
         db.close()
+
+def send_to_c_server(data):
+    """Sending to the c server"""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((TCP_IP, ROBOT_PORT))
+            s.sendall(data.encode())
+        return "Data sent successfully"
+    except Exception as e:
+        return f"Failed to send data: {e}"
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-#sends commands 
-def send_command(command):
-    #use socket.socket(addr,type) then connect and send 
-#    try:
-#        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-#            s.connect((ROBOT_IP, ROBOT_PORT))
-#            s.sendall(command.encode('utf-8'))
-
-    #print(f"Simulating sending command: {command}")
-    pass
-
-startSet=False
-endSet=False
-resetSet=False
-endPoint=[0,0]
-startPoint=[0,0]
+# Variables to track starting and ending positions
+start_set = False
+end_set = False
+start_point = [0, 0]
+end_point = [0, 0]
 
 @app.route('/move/<endpoint>')
 def move(endpoint):
-    endPoint[0]=endpoint[0]
-    endPoint[1]=endpoint[2]#endpoint is sent as a string I guess so [1] would return a ','
-    global endSet
-    endSet=True
-    
-    send_command(endpoint)
-    #print("Received data:", endpoint) 
-    findingWay(startPoint,endPoint)
-    return {"status": "success", "message": f"Command received: {endpoint}"}, 200 
-    
+    """Set the end point and send the move command to the C server."""
+    global end_set, end_point
+    try:
+        x, y = map(int, endpoint.split(','))
+        end_point = [x, y]
+        end_set = True
+        send_to_c_server('e'+endpoint)  # Send endpoint data to the C server
+        finding_way()
+        return {"status": "success", "message": f"Command received: {endpoint}"}, 200
+    except ValueError:
+        return {"status": "error", "message": "Invalid endpoint format"}, 400
+
 @app.route('/setStartingPosition/<coordinates>')
-def setStartingPosition(coordinates):
+def set_starting_position(coordinates):
     
-    startPoint[0]=coordinates[0]
-    startPoint[1]=coordinates[2]#same as for endpoint
-    global startSet
-    startSet= True
-    x, y = coordinates.split(',')
-    findingWay(startPoint,endPoint)
-    #print(f"Starting position received: ", coordinates)
-    return f"Starting position set to ({x}, {y})"
+    global start_set, start_point
+    try:
+        x, y = map(int, coordinates.split(','))
+        start_point = [x, y]
+        start_set = True
+        send_to_c_server('s'+str(start_point))
+        finding_way()
+        return {"status": "success", "message": f"Starting position set to ({x}, {y})"}, 200
+    except ValueError:
+        return {"status": "error", "message": "Invalid coordinates format"}, 400
 
-
-def findingWay(start,end):
-    if(startSet==True and endSet==True):
-        print("Need to find way from: ",startPoint," to: ",endPoint)
-    else :
-        #print("endpoint:", endPoint)
-        #print(endSet)
-        #print("starPoint: ",startPoint)
-        #print(startSet)
-        pass
+def finding_way():
     
+    if start_set and end_set:
+        print(f"Need to find way from: {start_point} to: {end_point}")
 
-#reset function
-@app.route('/reset/<resetSet>')
-def reset(resetSet):
-    global startSet
-    global startPoint
-    global endSet
-    global endPoint
-    print(f"received reset request with : {resetSet}")
+@app.route('/reset')
+def reset():
     
-    endPoint=[0,0]
-    startPoint=[0,0]
-    startSet=False
-    endSet=False
-    resetSet=0
-    print("stratpoint:",startSet)
-    print("endpoint:",endSet)
-    return f"Reset set to {resetSet}"
-  
-
+    global start_set, end_set, start_point, end_point
+    start_point = [0, 0]
+    end_point = [0, 0]
+    start_set = False
+    end_set = False
+    return {"status": "success", "message": "Navigation reset successful"}, 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
