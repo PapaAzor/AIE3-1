@@ -26,9 +26,9 @@ int dt=0;
 
 int pwmValue1;
 int pwmValue2;
-int k1=5;
+int k1=15;
 int k2=50;
-int k3=2; // ladnie bylo dla k1=10 k2=40 k3=1
+int k3=0.5; // ladnie bylo dla k1=10 k2=40 k3=1
 double straight(){
   
   digitalWrite(dir_1,HIGH); //RIGHT WHEEL FORWARD WHEN HIGH
@@ -50,11 +50,12 @@ double straight(){
 
   pwmValue1 = 140 + (k1*rotationError+k2*rotationErrorDerivative+k3*rotationErrorArea);
   pwmValue2 = 140 - (k1*rotationError+k2*rotationErrorDerivative+k3*rotationErrorArea);
-
+  pwmValue1=constrain(pwmValue1,0,255);
+    pwmValue2=constrain(pwmValue2,0,255);
   if(abs(rotationError) == 0){
    
-    analogWrite(pwm_2, 0); 
-    analogWrite(pwm_1, 0);
+    analogWrite(pwm_2, 128); 
+    analogWrite(pwm_1, 128);
   }
 
   if(abs(rotationError) > 0){
@@ -62,10 +63,10 @@ double straight(){
     analogWrite(pwm_2, pwmValue2); 
     analogWrite(pwm_1, pwmValue1);
   }
-  Serial.print(millis()/1000);
-  Serial.print(",");
+  
   //Serial.println(0);
-  Serial.println((rotationError));
+  Serial.println((pwmValue1));
+  Serial.println((pwmValue1));
   
   
   //Serial.print("derivative= ");
