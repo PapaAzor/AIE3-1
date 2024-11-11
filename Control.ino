@@ -11,34 +11,67 @@ unsigned long timer = 0;
 int angle;
 int rotationTarget=0;
 int rotationActual;
+
 int rotationError;
+int rotationErrorOld=0;
+int rotationErrorNew=0;
+int rotationErrorChange=0;
+int rotationErrorDerivative=0;
+
+int rotationErrorArea=0;
+
+int miliOld=0;
+int miliNew=0;
+int dt=0;
+
 int pwmValue1;
 int pwmValue2;
-
+int k1=5;
+int k2=50;
+int k3=2; // ladnie bylo dla k1=10 k2=40 k3=1
 double straight(){
   
   digitalWrite(dir_1,HIGH); //RIGHT WHEEL FORWARD WHEN HIGH
   digitalWrite(dir_2,LOW); //LEFT WHEEL BACKWARD WHEN HIGH
+
+  miliOld=miliNew;
+  miliNew=millis();
+  dt=miliNew-miliOld;
   
   rotationError = rotationTarget-rotationActual;
-  pwmValue1 = 140 + (2*rotationError);
-  pwmValue2 = 140 - (2*rotationError);
+  rotationErrorNew=rotationError;
+
+  rotationErrorChange=rotationErrorNew-rotationErrorOld;
+  rotationErrorDerivative=rotationErrorChange/dt;
+
+  rotationErrorArea=rotationError*dt;
+
+
+
+  pwmValue1 = 140 + (k1*rotationError+k2*rotationErrorDerivative+k3*rotationErrorArea);
+  pwmValue2 = 140 - (k1*rotationError+k2*rotationErrorDerivative+k3*rotationErrorArea);
 
   if(abs(rotationError) == 0){
-    Serial.println("condition 1");
-    Serial.println(rotationError);
-    analogWrite(pwm_2, 140); 
-    analogWrite(pwm_1, 140);
+   
+    analogWrite(pwm_2, 80); 
+    analogWrite(pwm_1, 80);
   }
 
   if(abs(rotationError) > 0){
-    Serial.println("condition 2");
-    Serial.println(rotationError);
+   
     analogWrite(pwm_2, pwmValue2); 
     analogWrite(pwm_1, pwmValue1);
   }
-
-  delay(10);
+  //Serial.print(millis()/1000);
+  Serial.print(",");
+  //Serial.println(0);
+  Serial.println((rotationError));
+  
+  
+  //Serial.print("derivative= ");
+  Serial.println(rotationErrorDerivative*10);
+  delay(5);
+  rotationErrorOld=rotationErrorNew;
 }
 
 void setup(){ 
@@ -62,13 +95,15 @@ void setup(){
   pinMode(pwm_2,OUTPUT); 
   pinMode(dir_2,OUTPUT); 
 
+  miliNew=millis();
+
  } 
  void loop(){
 
   mpu.update();
   rotationActual = int(mpu.getAngleZ());
-  Serial.print("\tZ : ");
-	Serial.println(rotationActual);
+  //Serial.print("\tZ : ");
+	//Serial.println(rotationActual);
   timer = millis(); 
   rotationError = rotationTarget-rotationActual;
   
