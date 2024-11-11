@@ -1,3 +1,35 @@
+#include "Wire.h"
+#include <MPU6050_light.h>
+#define dir_1 7 
+#define pwm_1 6 
+#define dir_2 4
+#define pwm_2 3
+
+MPU6050 mpu(Wire);
+
+unsigned long timer = 0;
+int angle;
+int rotationTarget=0;
+int rotationActual;
+int rotationError;
+int pwmValue1;
+int pwmValue2;
+
+double straight(){
+  
+  digitalWrite(dir_1,HIGH); //RIGHT WHEEL FORWARD WHEN HIGH
+  digitalWrite(dir_2,LOW); //LEFT WHEEL BACKWARD WHEN HIGH
+  
+  rotationError = rotationTarget-rotationActual;
+  pwmValue1 = 140 + (2*rotationError);
+  pwmValue2 = 140 - (2*rotationError);
+
+  if(abs(rotationError) == 0){
+    Serial.println("condition 1");
+    Serial.println(rotationError);
+    analogWrite(pwm_2, 140); 
+    analogWrite(pwm_1, 140);
+  }
 
   if(abs(rotationError) > 0){
     Serial.println("condition 2");
