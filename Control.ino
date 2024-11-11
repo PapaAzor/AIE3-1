@@ -53,8 +53,8 @@ double straight(){
 
   if(abs(rotationError) == 0){
    
-    analogWrite(pwm_2, 80); 
-    analogWrite(pwm_1, 80);
+    analogWrite(pwm_2, 0); 
+    analogWrite(pwm_1, 0);
   }
 
   if(abs(rotationError) > 0){
@@ -62,14 +62,14 @@ double straight(){
     analogWrite(pwm_2, pwmValue2); 
     analogWrite(pwm_1, pwmValue1);
   }
-  //Serial.print(millis()/1000);
+  Serial.print(millis()/1000);
   Serial.print(",");
   //Serial.println(0);
   Serial.println((rotationError));
   
   
   //Serial.print("derivative= ");
-  Serial.println(rotationErrorDerivative*10);
+  //Serial.println(rotationErrorDerivative*10);
   delay(5);
   rotationErrorOld=rotationErrorNew;
 }
@@ -80,15 +80,15 @@ void setup(){
   Wire.begin();
   
   byte status = mpu.begin();
-  Serial.print(F("MPU6050 status: "));
-  Serial.println(status);
+  //Serial.print(F("MPU6050 status: "));
+ // Serial.println(status);
   while(status!=0){ } // stop everything if could not connect to MPU6050
   
-  Serial.println(F("Calculating offsets, do not move MPU6050"));
+ // Serial.println(F("Calculating offsets, do not move MPU6050"));
   delay(1000);
   // mpu.upsideDownMounting = true; // uncomment this line if the MPU6050 is mounted upside-down
   mpu.calcOffsets(); // gyro and accelero
-  Serial.println("Done!\n");
+  //Serial.println("Done!\n");
   
   pinMode(pwm_1,OUTPUT); 
   pinMode(dir_1,OUTPUT); 
