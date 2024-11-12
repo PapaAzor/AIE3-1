@@ -1,11 +1,21 @@
 #include "Wire.h"
 #include <MPU6050_light.h>
+#include <Arduino.h>
+#include "A4988.h"
+
 #define dir_1 7 
 #define pwm_1 6 
 #define dir_2 4
 #define pwm_2 3
 
 MPU6050 mpu(Wire);
+
+int Step = 9; //GPIO14---D5 of Nodemcu--Step of stepper motor driver
+int Dire = 8; //GPIO2---D4 of Nodemcu--Direction of stepper motor driver
+const int spr = 200; //Steps per revolution
+int RPM = 50; //Motor Speed in revolutions per minute
+int Microsteps = 1; //Stepsize (1 for full steps, 2 for half steps, 4 for quarter steps, etc)
+A4988 stepper(spr, Dire, Step);
 
 unsigned long timer = 0;
 int angle;
@@ -29,6 +39,14 @@ int pwmValue2;
 int k1=15;
 int k2=50;
 int k3=0.5; // ladnie bylo dla k1=10 k2=40 k3=1
+
+double forks(){
+  stepper.rotate(160);
+  delay(5000);
+  stepper.rotate(-160);
+  delay(5000);
+}
+
 double straight(){
   
   digitalWrite(dir_1,HIGH); //RIGHT WHEEL FORWARD WHEN HIGH
@@ -46,12 +64,11 @@ double straight(){
 
   rotationErrorArea=rotationError*dt;
 
-
-
   pwmValue1 = 140 + (k1*rotationError+k2*rotationErrorDerivative+k3*rotationErrorArea);
   pwmValue2 = 140 - (k1*rotationError+k2*rotationErrorDerivative+k3*rotationErrorArea);
   pwmValue1=constrain(pwmValue1,0,255);
-    pwmValue2=constrain(pwmValue2,0,255);
+  pwmValue2=constrain(pwmValue2,0,255);
+
   if(abs(rotationError) == 0){
    
     analogWrite(pwm_2, 128); 
@@ -73,6 +90,7 @@ double straight(){
   //Serial.println(rotationErrorDerivative*10);
   delay(5);
   rotationErrorOld=rotationErrorNew;
+
 }
 
 void setup(){ 
@@ -96,6 +114,13 @@ void setup(){
   pinMode(pwm_2,OUTPUT); 
   pinMode(dir_2,OUTPUT); 
 
+  pinMode(Step, OUTPUT); //Step pin as output
+  pinMode(Dire,  OUTPUT); //Direcction pin as output
+  digitalWrite(Step, LOW); // Currently no stepper motor movement
+  digitalWrite(Dire, LOW);
+
+  stepper.begin(RPM, Microsteps);
+
   miliNew=millis();
 
  } 
@@ -104,7 +129,7 @@ void setup(){
   mpu.update();
   rotationActual = int(mpu.getAngleZ());
   //Serial.print("\tZ : ");
-	//Serial.println(rotationActual);
+  //Serial.println(rotationActual);
   timer = millis(); 
   rotationError = rotationTarget-rotationActual;
   
