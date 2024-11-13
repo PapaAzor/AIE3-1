@@ -36,9 +36,10 @@ void setup() {
     }
 }
 
-void send_command(int socket, const int *command, size_t num_elements) {
-    size_t length = num_elements * sizeof(int);
-    ssize_t bytes_sent = send(socket, command, length, 0);
+
+
+void send_command(int socket, const char *command) {
+    ssize_t bytes_sent = send(socket, command, strlen(command), 0);
     if (bytes_sent == -1) {
         perror("send failed");
     } else {
@@ -46,16 +47,24 @@ void send_command(int socket, const int *command, size_t num_elements) {
     }
 }
 
-int startingPos[3] = {0, 0, 0};
+int startingPos[3] = {2, 3, 90};
+char startingPosChar[10];
 char endPos[2];
 
-void *tcp_server_thread_function(void *arg) {
+void *tcp_server_thread_function(void *arg) { // kolejnosc to wczytaj dane ze strony(start i end )-> polacz sie z rpi i przeslij. Start sie przsyla end do zrobienia i rozpoznawanie
     while (1) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
             perror("Accept failed");
             continue;
         }
-
+        snprintf(startingPosChar, sizeof(startingPosChar), "%d,%d,%d", startingPos[0], startingPos[1], startingPos[2]);
+		send_command(new_socket, startingPosChar);
+        printf("Client connected.\n");
+        for(int i=0;i<3;i++){
+				startingPosChar[i]=startingPos[i]+ '0';
+				printf("startingPosChar[i]: %d\n", startingPosChar[i]);
+				}
+		
         int valread;
         #define arr_size 126
         int arr_index = 0;
@@ -68,22 +77,9 @@ void *tcp_server_thread_function(void *arg) {
             for (int i = 0; i < valread; i++) {
                 if (arr_index < arr_size - 1) {
                     arr[arr_index] = buffer[i];
-                   // printf("\nAdded to arr[%d]: %c", arr_index, arr[arr_index]);
                     arr_index++;
                 }
-				if(arr[0]!='s' && arr[0]!='e'){
-					if (arr[i] == 'u') {
-						printf("\nGoing Up");
-					} else if (arr[i] == 'd') {
-						printf("\nGoing Down");
-					} else if (arr[i] == 'l') {
-						printf("\nGoing Left");
-					} else if (arr[i] == 'r') {
-						printf("\nGoing Right");
-					} else {
-                    printf("\nUnknown command");
-					}
-			}
+                
             }
 
             if (arr[0] == 'e') {
@@ -95,16 +91,18 @@ void *tcp_server_thread_function(void *arg) {
                 startingPos[1] = arr[5] - '0';
                 startingPos[2] = arr[8] - '0';
                 startingPos[2] *= 90;
-                printf("startingPos[0]: %d, startingPos[1]: %d, startingPos[2]: %d\n", startingPos[0], startingPos[1], startingPos[2]);
-                size_t num_elements = sizeof(startingPos) / sizeof(startingPos[0]);
-				send_command(new_socket, startingPos, num_elements);
+                //printf("startingPos[0]: %d, startingPos[1]: %d, startingPos[2]: %d\n", startingPos[0], startingPos[1], startingPos[2]);
+
+                
+            
+            send_command(new_socket, startingPosChar);
             }
             
-            
         }
+        
 
         if (valread == 0) {
-            printf("\nClient disconnected.\n");
+            printf("Client disconnected.\n");
         }
 
         close(new_socket);
@@ -115,7 +113,7 @@ void *tcp_server_thread_function(void *arg) {
 
 int main() {
     setup();
-
+	
     pthread_t tcp_server_thread;
 
     if (pthread_create(&tcp_server_thread, NULL, tcp_server_thread_function, NULL) != 0) {
