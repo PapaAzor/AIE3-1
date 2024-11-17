@@ -1,7 +1,7 @@
 #include "Wire.h"
 #include <MPU6050_light.h>
 #include <Arduino.h>
-#include "A4988.h"
+
 
 #define dir_1 7 
 #define pwm_1 6 
@@ -10,25 +10,19 @@
 
 MPU6050 mpu(Wire);
 
-int Step = 9; //GPIO14---D5 of Nodemcu--Step of stepper motor driver
-int Dire = 8; //GPIO2---D4 of Nodemcu--Direction of stepper motor driver
-const int spr = 200; //Steps per revolution
-int RPM = 50; //Motor Speed in revolutions per minute
-int Microsteps = 1; //Stepsize (1 for full steps, 2 for half steps, 4 for quarter steps, etc)
-A4988 stepper(spr, Dire, Step);
 
 unsigned long timer = 0;
-int angle;
-int rotationTarget=0;
-int rotationActual;
+float angle;
+float rotationTarget=0;
+float rotationActual;
 
-int rotationError;
-int rotationErrorOld=0;
-int rotationErrorNew=0;
-int rotationErrorChange=0;
-int rotationErrorDerivative=0;
+float rotationError;
+float rotationErrorOld=0;
+float rotationErrorNew=0;
+float rotationErrorChange=0;
+float rotationErrorDerivative=0;
 
-int rotationErrorArea=0;
+float rotationErrorArea=0;
 
 int miliOld=0;
 int miliNew=0;
@@ -37,15 +31,10 @@ int dt=0;
 int pwmValue1;
 int pwmValue2;
 int k1=15;
-int k2=50;
-int k3=0.5; // ladnie bylo dla k1=10 k2=40 k3=1
+int k2=500;
+float k3=0.30; 
 
-double forks(){
-  stepper.rotate(160);
-  delay(5000);
-  stepper.rotate(-160);
-  delay(5000);
-}
+
 
 double straight(){
   
@@ -71,8 +60,8 @@ double straight(){
 
   if(abs(rotationError) == 0){
    
-    analogWrite(pwm_2, 128); 
-    analogWrite(pwm_1, 128);
+    analogWrite(pwm_2, 140); 
+    analogWrite(pwm_1, 140);
   }
 
   if(abs(rotationError) > 0){
@@ -82,8 +71,9 @@ double straight(){
   }
   
   //Serial.println(0);
-  Serial.println((pwmValue1));
-  Serial.println((pwmValue1));
+  Serial.print(millis()/1000.0);
+  Serial.print(",");
+  Serial.println((rotationError));
   
   
   //Serial.print("derivative= ");
@@ -99,8 +89,8 @@ void setup(){
   Wire.begin();
   
   byte status = mpu.begin();
-  //Serial.print(F("MPU6050 status: "));
- // Serial.println(status);
+  Serial.print(F("MPU6050 status: "));
+  Serial.println(status);
   while(status!=0){ } // stop everything if could not connect to MPU6050
   
  // Serial.println(F("Calculating offsets, do not move MPU6050"));
@@ -114,12 +104,8 @@ void setup(){
   pinMode(pwm_2,OUTPUT); 
   pinMode(dir_2,OUTPUT); 
 
-  pinMode(Step, OUTPUT); //Step pin as output
-  pinMode(Dire,  OUTPUT); //Direcction pin as output
-  digitalWrite(Step, LOW); // Currently no stepper motor movement
-  digitalWrite(Dire, LOW);
+  
 
-  stepper.begin(RPM, Microsteps);
 
   miliNew=millis();
 
@@ -127,11 +113,18 @@ void setup(){
  void loop(){
 
   mpu.update();
-  rotationActual = int(mpu.getAngleZ());
+  rotationActual = mpu.getAngleZ();
   //Serial.print("\tZ : ");
   //Serial.println(rotationActual);
   timer = millis(); 
   rotationError = rotationTarget-rotationActual;
-  
+  int myTime=millis()/1000.0;
+  /*if(myTime<5){
+    rotationTarget=0;
+  }
+  if(myTime>5){
+    rotationTarget=270;
+  }*/
   straight();
+  
  }
