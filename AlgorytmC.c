@@ -82,7 +82,21 @@ void list_dir() {
 int main(int argc, char *argv[]) {
    
     char *startPos = argv[1];
+    int startPosReceived[3];
     char *endPos = argv[2];
+    int endPosReceived[2];
+    for (int i = 0; startPos[i] != '\0'; i++) {
+        startPosReceived[i] = startPos[i] - '0';  // Convert char to int by subtracting '0'
+        printf("startPosReceived[%d] = %d\n", i, startPosReceived[i]);
+    }
+    
+    for (int i = 0; endPos[i] != '\0'; i++) {
+        endPosReceived[i] = startPos[i] - '0';  // Convert char to int by subtracting '0'
+        printf("endPosReceived[%d] = %d\n", i, endPosReceived[i]);
+    }
+    
+    //printf("StartPos : %s\n",startPos);
+    //printf("EndPos : %s\n",endPos);
     
     
 
