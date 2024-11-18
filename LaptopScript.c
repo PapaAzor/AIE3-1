@@ -36,7 +36,34 @@ void setup() {
     }
 }
 
+void algorythm(int arg1[], int arg2[], int size1, int size2) {
+    char arg1c[size1 +1];  // +1 for the null terminator
+    char arg2c[size2 +1];  // +1 for the null terminator
+    
+    // Convert integers to characters and build the strings
+    for (int i = 0; i < size1; i++) {
+        arg1c[i] = arg1[i] + '0';  // Convert each digit to its character representation
+    }
+    arg1c[size1] = '\0';  // Null-terminate the string
 
+    for (int i = 0; i < size2; i++) {
+        arg2c[i] = arg2[i] + '0';  // Convert each digit to its character representation
+        
+    }
+    arg2c[size2] = '\0';  // Null-terminate the string
+
+    // Format the command string
+    char command[256];
+    snprintf(command, sizeof(command), "./Algorytm '%s' '%s'", arg1c, arg2c);
+
+    // Execute the command
+    int result = system(command);
+
+    // Check execution result
+    if (result == -1) {
+        perror("Error executing path_finder");
+    }
+}
 
 void send_command(int socket, const char *command) {
     ssize_t bytes_sent = send(socket, command, strlen(command), 0);
@@ -50,8 +77,11 @@ void send_command(int socket, const char *command) {
 int startingPos[3] = {2, 3, 90};
 char startingPosChar[10];
 char endPos[2];
-
+int endPosInt[2];
+int startSet=0;
+int endSet=0;
 void *tcp_server_thread_function(void *arg) { // kolejnosc to wczytaj dane ze strony(start i end )-> polacz sie z rpi i przeslij. Start sie przsyla end do zrobienia i rozpoznawanie
+	
     while (1) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
             perror("Accept failed");
@@ -62,7 +92,7 @@ void *tcp_server_thread_function(void *arg) { // kolejnosc to wczytaj dane ze st
         printf("Client connected.\n");
         for(int i=0;i<3;i++){
 				startingPosChar[i]=startingPos[i]+ '0';
-				printf("startingPosChar[i]: %d\n", startingPosChar[i]);
+				//printf("startingPosChar[i]: %d\n", startingPosChar[i]);
 				}
 		
         int valread;
@@ -85,18 +115,30 @@ void *tcp_server_thread_function(void *arg) { // kolejnosc to wczytaj dane ze st
             if (arr[0] == 'e') {
                 endPos[0] = arr[1];
                 endPos[1] = arr[3];
+                endPosInt[0]=endPos[0]-'0' ;
+                endPosInt[1]=endPos[1]-'0' ;
+                endSet=1;
+                
             }
             if (arr[0] == 's') {
                 startingPos[0] = arr[2] - '0';
                 startingPos[1] = arr[5] - '0';
                 startingPos[2] = arr[8] - '0';
                 startingPos[2] *= 90;
-                //printf("startingPos[0]: %d, startingPos[1]: %d, startingPos[2]: %d\n", startingPos[0], startingPos[1], startingPos[2]);
-
+                startSet=1;
                 
-            
+                
+			if(startSet==1 && endSet==1){
+				
+				algorythm(startingPos, endPosInt, 3, 2);
+				
+				}
+				
+            //printf("startingPos[0]: %d, startingPos[1]: %d, startingPos[2]: %d\n", startingPos[0], startingPos[1], startingPos[2]);    
+           // printf("EndPos[0]: %d, EndPos[1]: %d\n", endPosInt[0], endPosInt[1]);
             send_command(new_socket, startingPosChar);
             }
+            
             
         }
         
