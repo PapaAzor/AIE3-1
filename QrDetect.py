@@ -1,66 +1,76 @@
-import sqlite3
+from picamera2 import Picamera2
 import cv2
-from flask import Flask, render_template,jsonify, request, g #json for convertion, request obvious and g for storing data(typically databvase)
 import socket
+from pyzbar.pyzbar import decode
+import numpy as np
 
+# Camera settings
 width = 1280
 height = 720
-camera_id = 0
+window_name = 'PiCamera QR Code'
 delay = 1
-window_name = 'OpenCV QR Code'
 
-qcd = cv2.QRCodeDetector()
-cam = cv2.VideoCapture(camera_id)
+# TCP server settings (C server)
+SERVER_IP = '192.168.156.196'  # IP address of the C server
+PORT = 8000  # Port used by the C server
 
-cam.set(cv2.CAP_PROP_FRAME_WIDTH,width)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT,height)
-cam.set(cv2.CAP_PROP_FPS,15)
-cam.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc(*'MJPG'))
+# Function to send data to the C server via TCP
+def send_to_c_server(data):
+    try:
+        # Create a socket and connect to the C server
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((SERVER_IP, PORT))
+        sock.sendall(data.encode())  # Send QR data as a string
+        sock.close()  # Close the socket after sending the data
+        print("Data sent to C server: ", data)
+    except Exception as e:
+        print(f"Failed to send data to server: {e}")
 
-def get_db():
-    
-    db=sqlite3.connect("sia.db")
-    return db
-        
-    
-def scan_qr(qr_code):
-    db = get_db()
-    cursor = db.cursor() # something that allows interaction with the database
-    
-    cursor.execute('SELECT shape, x_position, y_position FROM qr_positions WHERE qr_data = ?', (qr_code,))
-    result = cursor.fetchone()
+# Initialize Picamera2
+piCam = Picamera2()
 
-    if result:
-        shape, x_pos, y_pos = result  
-        return shape, x_pos, y_pos
-    return None  
-        
-def qr_func(ret,frame):
-    if ret:
-        ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(frame)
-        if ret_qr:
-            for s, p in zip(decoded_info, points):
-                if s:
-                    
-                    result=scan_qr(s)
-                    
-                    if result:
-                        shape, x_pos, y_pos = result
-                        #print(f"Shape: {shape}, X: {x_pos}, Y: {y_pos}")
-                        return x_pos,y_pos
-                    
-                 
+# Configure the camera
+piCam.preview_configuration.main.size = (width, height)
+piCam.preview_configuration.main.format = "RGB888"
+piCam.preview_configuration.align()
+piCam.configure("preview")
+piCam.start()
 
-get_db()
-while True:
-    
-    ret, frame = cam.read()
-    qr_func(ret,frame)
-    #print(qr_func(ret,frame))
-    
-    cv2.imshow(window_name, frame)
+def qr_func(frame):
+    """Processes the frame to detect QR codes."""
+    decoded_info = decode(frame)
+    if decoded_info:
+        for obj in decoded_info:
+            qr_data = obj.data.decode('utf-8')
+            print(f"Detected QR Code: {qr_data}")
+            
+            # Send QR data to C server
+            send_to_c_server(qr_data)
+            
+            # Draw bounding box around detected QR code
+            points = obj.polygon
+            if len(points) == 4:
+                pts = np.array(points, dtype=np.int32)
+                pts = pts.reshape((-1, 1, 2))
+                cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
+    return frame
 
-    if cv2.waitKey(delay) & 0xFF == ord('q'):
-        break
+# Main loop
+try:
+    while True:
+        # Capture frame from PiCamera
+        frame = piCam.capture_array()
 
-cv2.destroyWindow(window_name)
+        # Process the frame for QR codes
+        frame = qr_func(frame)
+
+        # Display the frame
+        cv2.imshow(window_name, frame)
+
+        # Exit if 'q' is pressed
+        if cv2.waitKey(delay) & 0xFF == ord('q'):
+            break
+finally:
+    # Cleanup
+    piCam.stop()
+    cv2.destroyAllWindows()
