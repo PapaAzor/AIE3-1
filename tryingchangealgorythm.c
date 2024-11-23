@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 
-
-
 int mapway[2]={0,0};
 char startPos[2]={'3','4'};
 int startPosReceived[2]={0,0};
 char endPos[2]={'1','1'};
 int endPosReceived[2]={0,0};
 char instructions[127]={'0'};
+char drive[127]={'0'};
 int a=0;
     int main() {
     for (int i = 0; i<2; i++) {
@@ -63,4 +62,44 @@ for (int i = 0; i < 128; i++)
     printf("%c\n", instructions[i]);
   }
   
+
+char direction = 'u'; // Initial direction
+
+    for (int i = 0; i < 128; i++) {
+        char current = instructions[i];
+        if (current == direction) {
+            drive[i]='F';
+        } else {
+            if (current == 'u') {
+                if (direction == 'l') {drive[i]='R';}
+                if (direction == 'r') {drive[i]='L';}
+                if (direction == 'd') {drive[i]='T';}
+                direction = 'u';
+            } else if (current == 'd') {
+                if (direction == 'l') {drive[i]='L';}
+                if (direction == 'r') {drive[i]='R';}
+                if (direction == 'u') {drive[i]='T';}
+                direction = 'd';
+            } else if (current == 'l') {
+                if (direction == 'd') {drive[i]='R';}
+                if (direction == 'u') {drive[i]='L';}
+                if (direction == 'r') {drive[i]='T';}
+                direction = 'l';
+            } else if (current == 'r') {
+                if (direction == 'u') {drive[i]='R';}
+                if (direction == 'd') {drive[i]='L';}
+                if (direction == 'l') {drive[i]='T';}
+                direction = 'r';
+            }
+            else{drive[i]='E';
+            break;
+            }
+        }
+    }
+    for (int i = 0; i < 128; i++) 
+  {
+      if(drive[i]=='E')
+      {break;}
+    printf("%c\n", drive[i]);
+  }
 }
