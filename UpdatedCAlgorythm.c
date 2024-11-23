@@ -4,13 +4,16 @@
 int main(int argc, char *argv[]) {
 int mapway[2]={0,0};
 char *startPos = argv[1];
-    int startPosReceived[3];
-    char *endPos = argv[2];
-    int endPosReceived[2];
+int startPosReceived[3];
+char *endPos = argv[2];
+int endPosReceived[2];
 char instructions[127]={'0'};
 char drive[127]={'0'};
 int a=0;
-    /*for (int i = 0; i<2; i++) {
+char direction = 'u'; // Initial direction
+      
+
+      for (int i = 0; i<2; i++) {
         startPosReceived[i] = startPos[i]- '0';  // Convert char to int by subtracting '0'
          printf("startPosReceived[%d] = %d\n", i, startPosReceived[i]);
     }
@@ -19,38 +22,42 @@ int a=0;
         endPosReceived[i] = endPos[i]- '0';  // Convert char to int by subtracting '0'
         printf("endPosReceived[%d] = %d\n", i, endPosReceived[i]);
     }
-for (int i = 0; i<2; i++) {
-     printf("directions[%d] = %d\n",i,mapway[i]=endPosReceived[i]-startPosReceived[i]);
-  }*/
-  mapway[1]=endPosReceived[1]-startPosReceived[1];
+ 
   mapway[0]=endPosReceived[0]-startPosReceived[0];
-  
+  mapway[1]=endPosReceived[1]-startPosReceived[1];
+    
 while(mapway[0]!=0)
     {
      if (mapway[0]>0)
-     {mapway[0]=mapway[0]-1;
-        instructions[a]='r';
+     { 
+         mapway[0]=mapway[0]-1;
+         instructions[a]='r';
          a++;
      }
      else
-     {mapway[0]=mapway[0]+1;
-          instructions[a]='l';
+     {
+         mapway[0]=mapway[0]+1;
+         instructions[a]='l';
          a++;   
      }
     }
+    
     while(mapway[1]!=0)
     {
      if (mapway[1]>0)
-     {mapway[1]=mapway[1]-1;
-          instructions[a]='u';
+     {
+         mapway[1]=mapway[1]-1;
+         instructions[a]='u';
          a++;
      }
      else
-     {mapway[1]=mapway[1]+1;
-          instructions[a]='d';
+     {
+         mapway[1]=mapway[1]+1;
+         instructions[a]='d';
          a++;
      }
     }
+    
 instructions[a]='e';
 /*for (int i = 0; i < 128; i++) 
   {
@@ -58,10 +65,6 @@ instructions[a]='e';
       {break;}
     printf("%c\n", instructions[i]);
   }*/
-  
-
-char direction = 'u'; // Initial direction
-
     for (int i = 0; i < 128; i++) {
         char current = instructions[i];
         if (current == direction) {
