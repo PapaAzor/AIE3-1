@@ -22,9 +22,25 @@ void *receive_data_thread_function(void *arg) {
     while ((valread = read(sock, buffer, BUFFER_SIZE - 1)) > 0) {
         buffer[valread] = '\0';  // Null-terminate the received string
         printf("Received data from server: %s\n", buffer);  // Print the received data
+        if(buffer[0]=='c'){
+            int ClientX=buffer[1]-'0';
+            int ClientY=buffer[2]-'0';
+            printf("Received x: %d \n",ClientX);
+            printf("Received y: %d \n",ClientY);
+            }
     }
     return NULL;
 }
+
+void *QrThreadFunc(void *arg) {
+    
+        system("python QrDetect.py");
+        
+   
+    return NULL;
+}
+
+
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -53,15 +69,28 @@ int main(int argc, char *argv[]) {
         perror("Connection failed");
         return -1;
     }
-
+   /* pthread_t QrThread;
+     if (pthread_create(&QrThread, NULL, QrThreadFunc, NULL) != 0) {
+        fprintf(stderr, "Error creating Qr thread\n");
+        return 1;
+    }*/
+    system("python QrDetect.py");
+    
+    printf("python finishing");
+    //pthread_join(QrThread, NULL);
 
     pthread_t receive_thread;
+    
+
+    
     if (pthread_create(&receive_thread, NULL, receive_data_thread_function, NULL) != 0) {
         fprintf(stderr, "Error creating receive thread\n");
         return 1;
     }
-
+    
+    
     pthread_join(receive_thread, NULL);
+    
 
     // Close the socket
     close(sock);
