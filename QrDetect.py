@@ -3,12 +3,15 @@ import cv2
 import socket
 from pyzbar.pyzbar import decode
 import numpy as np
+import sys  # Import sys for clean exit
+import time
 
 # Camera settings
 width = 1280
 height = 720
 window_name = 'PiCamera QR Code'
 delay = 1
+QrDetected=0
 
 # TCP server settings (C server)
 SERVER_IP = '192.168.156.196'  # IP address of the C server
@@ -17,11 +20,16 @@ PORT = 8000  # Port used by the C server
 # Function to send data to the C server via TCP
 def send_to_c_server(data):
     try:
-        # Create a socket and connect to the C server
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((SERVER_IP, PORT))
-        sock.sendall(data.encode())  # Send QR data as a string
-        sock.close()  # Close the socket after sending the data
+        #pass the socket
+        shared_socket_fd = int(sys.argv[1])  
+        print(f"Using shared socket FD: {shared_socket_fd}")
+        
+     
+        
+        shared_socket = socket.fromfd(shared_socket_fd, socket.AF_INET, socket.SOCK_STREAM)
+        
+       
+        shared_socket.sendall(data.encode())
         print("Data sent to C server: ", data)
     except Exception as e:
         print(f"Failed to send data to server: {e}")
@@ -37,6 +45,7 @@ piCam.configure("preview")
 piCam.start()
 
 def qr_func(frame):
+    global QrDetected  # Declare QrDetected as global
     """Processes the frame to detect QR codes."""
     decoded_info = decode(frame)
     if decoded_info:
@@ -53,11 +62,16 @@ def qr_func(frame):
                 pts = np.array(points, dtype=np.int32)
                 pts = pts.reshape((-1, 1, 2))
                 cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
+
+            QrDetected = 1  # Modify the global variable
+            
+            
     return frame
 
 # Main loop
 try:
     while True:
+        
         # Capture frame from PiCamera
         frame = piCam.capture_array()
 
@@ -70,7 +84,10 @@ try:
         # Exit if 'q' is pressed
         if cv2.waitKey(delay) & 0xFF == ord('q'):
             break
+        if(QrDetected==1):
+            break
 finally:
     # Cleanup
     piCam.stop()
     cv2.destroyAllWindows()
+    sys.exit(0)  # Ensure exit in case of failure
