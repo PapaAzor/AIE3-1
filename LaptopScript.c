@@ -16,7 +16,7 @@ struct sockaddr_in address;
 int addrlen = sizeof(address);
 char buffer[BUFFER_SIZE] = {0};
 
-
+int myServerFd;
 //db stuff
 sqlite3 *db;
 sqlite3_stmt *stmt;
@@ -59,6 +59,49 @@ void setup() {
     }
 }
 
+
+
+
+void algorythm(int arg1[], int arg2[], int size1, int size2, int serverFd) {
+    char arg1c[size1 + 1];  // +1 for the null terminator
+    char arg2c[size2 + 1];  
+    
+    // Convert arg1 array to string
+    for (int i = 0; i < size1; i++) {
+        arg1c[i] = arg1[i] + '0';  
+    }
+    arg1c[size1] = '\0';  // Null-terminate the string
+
+    // Convert arg2 array to string
+    for (int i = 0; i < size2; i++) {
+        arg2c[i] = arg2[i] + '0';  
+    }
+    arg2c[size2] = '\0';  // Null-terminate the string
+
+    // Format the command string to include serverFd
+    char command[256];
+    snprintf(command, sizeof(command), "./Algorytm '%s' '%s' %d", arg1c, arg2c, serverFd);
+
+    // Execute the command
+    int result = system(command);
+
+    // Check execution result
+    if (result == -1) {
+        perror("Error executing path_finder");
+    }
+}
+
+
+
+void send_command(int socket, const char *command) {
+    ssize_t bytes_sent = send(socket, command, strlen(command), 0);
+    if (bytes_sent == -1) {
+        perror("send failed");
+    } else {
+        printf("Sent %ld bytes\n", bytes_sent);
+    }
+}
+
 int check_if_exists_in_db(char search_value[]) {
     const char *sql = "SELECT x_position, y_position FROM qr_positions WHERE shape = ?";  // SQL query
 
@@ -78,50 +121,19 @@ int check_if_exists_in_db(char search_value[]) {
         // Retrieve the x_position and y_position
         int x_position = sqlite3_column_int(stmt, 0);  // First column is x_position
         int y_position = sqlite3_column_int(stmt, 1);  // Second column is y_position
+        char clientInfoChar[10];
+        clientInfoChar[0]='c';
+        clientInfoChar[1]=x_position+'0';
+        clientInfoChar[2]=y_position+'0';
+        
         printf("Shape: '%s' -> x_position: %d, y_position: %d\n", search_value, x_position, y_position);
+        send_command(new_socket, clientInfoChar);
         sqlite3_finalize(stmt);  // Clean up after query
         return 1;  // Return 1 to indicate success
     } else {
         printf("No positions found for shape: '%s'\n", search_value);
         sqlite3_finalize(stmt);  // Clean up after query
         return 0;  // Return 0 to indicate no match found
-    }
-}
-
-
-void algorythm(int arg1[], int arg2[], int size1, int size2) {
-    char arg1c[size1 + 1];  // +1 for the null terminator
-    char arg2c[size2 + 1];  
-    
-    for (int i = 0; i < size1; i++) {
-        arg1c[i] = arg1[i] + '0';  
-    }
-    arg1c[size1] = '\0';  // Null-terminate the string
-
-    for (int i = 0; i < size2; i++) {
-        arg2c[i] = arg2[i] + '0';  
-    }
-    arg2c[size2] = '\0';  
-
-    // Format the command string
-    char command[256];
-    snprintf(command, sizeof(command), "./Algorytm '%s' '%s'", arg1c, arg2c);
-
-    // Execute the command
-    int result = system(command);
-
-    // Check execution result
-    if (result == -1) {
-        perror("Error executing path_finder");
-    }
-}
-
-void send_command(int socket, const char *command) {
-    ssize_t bytes_sent = send(socket, command, strlen(command), 0);
-    if (bytes_sent == -1) {
-        perror("send failed");
-    } else {
-        printf("Sent %ld bytes\n", bytes_sent);
     }
 }
 
@@ -133,30 +145,45 @@ int startSet = 0;
 int endSet = 0;
 
 void *tcp_server_thread_function(void *arg) {
+	myServerFd=server_fd;
     while (1) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
             perror("Accept failed");
             continue;
         }
-        snprintf(startingPosChar, sizeof(startingPosChar), "%d,%d,%d", startingPos[0], startingPos[1], startingPos[2]);
-        send_command(new_socket, startingPosChar);
+       char try[]="starting";
+       // snprintf(startingPosChar, sizeof(startingPosChar), "%d,%d,%d", startingPos[0], startingPos[1], startingPos[2]);
+       // send_command(new_socket, try);
+        //send_command(new_socket, startingPosChar);
+        //send_command(new_socket, endPos);
+        algorythm(startingPos, endPosInt, 3, 2,new_socket);//tutaj zeby malina dostala jak tylko sie polaczy
         printf("Client connected.\n");
 
         int valread;
         #define arr_size 126
         int arr_index = 0;
         char arr[arr_size] = {0};
-
         while ((valread = read(new_socket, buffer, BUFFER_SIZE - 1)) > 0) {
             buffer[valread] = '\0';
             printf("Received data: %s\n", buffer);
-
+            
             for (int i = 0; i < valread; i++) {
                 if (arr_index < arr_size - 1) {
                     arr[arr_index] = buffer[i];
                     arr_index++;
                 }
             }
+            if(arr[0]!='e' && arr[0]!='s'){
+				
+				
+            int found = check_if_exists_in_db(buffer);
+			if (found) {
+			printf("Shape '%s' found in the database.\n", buffer);
+			} 
+			else {
+			printf("Shape '%s' not found in the database.\n", buffer);
+			}
+			}
 
             if (arr[0] == 'e') {
                 endPos[0] = arr[1];
@@ -164,34 +191,33 @@ void *tcp_server_thread_function(void *arg) {
                 endPosInt[0] = endPos[0] - '0';
                 endPosInt[1] = endPos[1] - '0';
                 endSet = 1;
-                
+                //send_command(new_socket, endPos);
             }
 
             if (arr[0] == 's') {
+				startingPosChar[0]=arr[2];
                 startingPos[0] = arr[2] - '0';
+                startingPosChar[1]=arr[5];
                 startingPos[1] = arr[5] - '0';
+                startingPosChar[2]=arr[8];
                 startingPos[2] = arr[8] - '0';
                 startingPos[2] *= 90;
                 startSet = 1;
-                send_command(new_socket, startingPosChar);
-            }
-
-            if (startSet == 1 && endSet == 1) {
-                algorythm(startingPos, endPosInt, 3, 2);
+                printf("starting pos char");
+                //send_command(new_socket, startingPosChar);
             }
             
-           /* int found = check_if_exists_in_db(buffer);
-			if (found) {
-			printf("Shape '%s' found in the database.\n", buffer);
-			} else {
-			printf("Shape '%s' not found in the database.\n", buffer);
-			}
-
-			// Close the database after finishing all operations
-			sqlite3_close(db);*/
             
+
+          /*  if (startSet == 1 && endSet == 1) {
+				printf("SocketFd: %d\n",myServerFd);
+               // algorythm(startingPos, endPosInt, 3, 2,myServerFd);
+                //printf("sent to algorithm \n");
+            } */
+
         }
-
+        	 
+        
         if (valread == 0) {
             printf("Client disconnected.\n");
         }
@@ -202,10 +228,11 @@ void *tcp_server_thread_function(void *arg) {
     return NULL;
 }
 
-int main() {
+int main() {// zeby dzialalo -> app wybrac potem polaczyc sie z  maliny
     setup();
-    /* this was for testing and it worked 
-    char shape[]="Circle";
+    //this was for testing and it worked 
+    
+   /* char shape[]="Circle";
     int found = check_if_exists_in_db(shape);
 			if (found) {
 			printf("Shape '%s' found in the database.\n", shape);
@@ -231,6 +258,7 @@ int main() {
 
     sqlite3_finalize(stmt);
     sqlite3_close(db);
+    
     close(server_fd);
     return 0;
 }
