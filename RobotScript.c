@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #define PORT 8000  // Define the port for TCP connection
 #define BUFFER_SIZE 1024
@@ -18,6 +20,7 @@ void send_command(const char *command) {
 
 // Thread to receive data from the server
 void *receive_data_thread_function(void *arg) {
+    printf("New\n");
     int valread;
     while ((valread = read(sock, buffer, BUFFER_SIZE - 1)) > 0) {
         buffer[valread] = '\0';  // Null-terminate the received string
@@ -32,17 +35,18 @@ void *receive_data_thread_function(void *arg) {
     return NULL;
 }
 
-void *QrThreadFunc(void *arg) {
-    
-        system("python QrDetect.py");
-        
-   
+void *run_command(void *arg) {
+    int socket = *(int *)arg;  
+    printf("socket: %d",socket);
+    char command[100];
+    snprintf(command, sizeof(command), "python3 -u QrDetect.py %d", socket);
+    system(command);  
     return NULL;
 }
 
 
-
 int main(int argc, char *argv[]) {
+    
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <server_ip>\n", argv[0]);
         return -1;
@@ -69,15 +73,24 @@ int main(int argc, char *argv[]) {
         perror("Connection failed");
         return -1;
     }
-   /* pthread_t QrThread;
-     if (pthread_create(&QrThread, NULL, QrThreadFunc, NULL) != 0) {
-        fprintf(stderr, "Error creating Qr thread\n");
-        return 1;
-    }*/
-    system("python QrDetect.py");
+   
+
+     pthread_t thread;
     
-    printf("python finishing");
-    //pthread_join(QrThread, NULL);
+    if (pthread_create(&thread, NULL, run_command, &sock) != 0) {
+        perror("pthread_create failed");
+        return 1;
+    }
+
+    printf("Command is running in the background...\n");
+
+    pthread_join(thread, NULL);
+    
+    
+        
+   
+
+    
 
     pthread_t receive_thread;
     
