@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int main(int argc, char *argv[]) {
+int serverFdInt = atoi(server_fd);
 int mapway[2]={0,0};
 char *startPos = argv[1];
 int startPosReceived[3];
@@ -11,6 +11,21 @@ char instructions[127]={'0'};
 char drive[127]={'0'};
 int a=0;
 char direction = 'u'; // Initial direction
+
+void send_command(int socket, const char *command) {
+    ssize_t bytes_sent = send(socket, command, strlen(command), 0);
+    if (bytes_sent == -1) {
+        perror("send failed");
+    } else {
+        printf("Sent %ld bytes\n", bytes_sent);
+    }
+}
+
+
+
+
+int main(int argc, char *argv[]) {
+
       
 
       for (int i = 0; i<2; i++) {
@@ -102,5 +117,9 @@ instructions[a]='e';
       {break;}
     printf("%c\n", drive[i]);
   }*/
+      printf("ServerFd: %d\n", serverFdInt);
+
+    printf("Sending data...\n");
+    send_command(serverFdInt, drive[]);
 return 0;
 }
