@@ -46,15 +46,15 @@ int main(int argc, char *argv[]) {
     
 while(mapway[0]!=0)
     {
-     if (mapway[0]>0)
+     if (mapway[0]<0)
      { 
-         mapway[0]=mapway[0]-1;
+         mapway[0]=mapway[0]+1;
          instructions[a]='r';
          a++;
      }
      else
      {
-         mapway[0]=mapway[0]+1;
+         mapway[0]=mapway[0]-1;
          instructions[a]='l';
          a++;   
      }
