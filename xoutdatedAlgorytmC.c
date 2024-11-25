@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 // Global variables for instructions and drive arrays
 char instructions[256];
@@ -79,31 +82,63 @@ void list_dir() {
     }
 }
 
+
+void send_command(int socket, const char *command) {
+    ssize_t bytes_sent = send(socket, command, strlen(command), 0);
+    if (bytes_sent == -1) {
+        perror("send failed");
+    } else {
+        printf("Sent %ld bytes\n", bytes_sent);
+    }
+}
 int main(int argc, char *argv[]) {
-   
+    // Check if enough arguments were provided
+    if (argc < 4) {
+        fprintf(stderr, "Usage: %s <startPos> <endPos> <server_fd>\n", argv[0]);
+        return 1;
+    }
+
+    // Print the arguments for debugging
+    for (int i = 0; i < argc; i++) {
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
+
+    // Parse the start and end positions from command-line arguments
     char *startPos = argv[1];
-    int startPosReceived[3];
     char *endPos = argv[2];
-    int endPosReceived[2];
-    for (int i = 0; startPos[i] != '\0'; i++) {
+    char *server_fd = argv[3];
+
+    // Convert start and end positions to integer arrays
+    int startPosReceived[3] = {0};  // Assuming the positions contain 3 digits
+    int endPosReceived[2] = {0};    // Assuming the positions contain 2 digits
+    
+    for (int i = 0; startPos[i] != '\0' && i < 3; i++) {
         startPosReceived[i] = startPos[i] - '0';  // Convert char to int by subtracting '0'
-        printf("startPosReceived[%d] = %d\n", i, startPosReceived[i]);
+        //printf("startPosReceived[%d] = %d\n", i, startPosReceived[i]);
     }
-    
-    for (int i = 0; endPos[i] != '\0'; i++) {
-        endPosReceived[i] = startPos[i] - '0';  // Convert char to int by subtracting '0'
-        printf("endPosReceived[%d] = %d\n", i, endPosReceived[i]);
+
+    for (int i = 0; endPos[i] != '\0' && i < 2; i++) {
+        endPosReceived[i] = endPos[i] - '0';  // Convert char to int by subtracting '0'
+        //printf("endPosReceived[%d] = %d\n", i, endPosReceived[i]);
     }
-    
-    //printf("StartPos : %s\n",startPos);
-    //printf("EndPos : %s\n",endPos);
-    
-    
 
+    // Convert server_fd (string) to an integer file descriptor
+    int serverFdInt = atoi(server_fd);
+    if (serverFdInt <= 0) {
+        fprintf(stderr, "Invalid server file descriptor: %s\n", server_fd);
+        return 1;
+    }
 
-    // Print instructions
-    printf("Instructions: %s\n", instructions);
+    printf("ServerFd: %d\n", serverFdInt);
 
+    // Send a sample command to the server
+    printf("Sending data...\n");
+    send_command(serverFdInt, "hello");
+
+    // Optional: Print instructions or any other message (you must define it)
+    // char instructions[] = "These are your instructions.";
+    // printf("Instructions: %s\n", instructions);
 
     return 0;
 }
+
