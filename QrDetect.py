@@ -1,9 +1,9 @@
 from picamera2 import Picamera2
 import cv2
 import socket
-from pyzbar.pyzbar import decode
+from pyzbar.pyzbar import decode #bacause opencv's QR decode didnt work without building from scratch 
 import numpy as np
-import sys  # Import sys for clean exit
+import sys  #  for clean exit
 import time
 
 # Camera settings
@@ -13,22 +13,18 @@ window_name = 'PiCamera QR Code'
 delay = 1
 QrDetected=0
 
-# TCP server settings (C server)
-SERVER_IP = '192.168.156.196'  # IP address of the C server
-PORT = 8000  # Port used by the C server
 
-# Function to send data to the C server via TCP
+SERVER_IP = '192.168.156.196' 
+PORT = 8000  
+
+
 def send_to_c_server(data):
     try:
         #pass the socket
         shared_socket_fd = int(sys.argv[1])  
         print(f"Using shared socket FD: {shared_socket_fd}")
         
-     
-        
-        shared_socket = socket.fromfd(shared_socket_fd, socket.AF_INET, socket.SOCK_STREAM)
-        
-       
+        shared_socket = socket.fromfd(shared_socket_fd, socket.AF_INET, socket.SOCK_STREAM)    
         shared_socket.sendall(data.encode())
         print("Data sent to C server: ", data)
     except Exception as e:
@@ -53,7 +49,6 @@ def qr_func(frame):
             qr_data = obj.data.decode('utf-8')
             print(f"Detected QR Code: {qr_data}")
             
-            # Send QR data to C server
             send_to_c_server(qr_data)
             
             # Draw bounding box around detected QR code
@@ -63,25 +58,18 @@ def qr_func(frame):
                 pts = pts.reshape((-1, 1, 2))
                 cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
 
-            QrDetected = 1  # Modify the global variable
-            
-            
+            QrDetected = 1 
+                        
     return frame
 
-# Main loop
 try:
     while True:
         
-        # Capture frame from PiCamera
         frame = piCam.capture_array()
-
-        # Process the frame for QR codes
         frame = qr_func(frame)
 
-        # Display the frame
         cv2.imshow(window_name, frame)
 
-        # Exit if 'q' is pressed
         if cv2.waitKey(delay) & 0xFF == ord('q'):
             break
         if(QrDetected==1):
