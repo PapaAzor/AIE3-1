@@ -152,10 +152,7 @@ void *tcp_server_thread_function(void *arg) {
             continue;
         }
        char try[]="starting";
-       // snprintf(startingPosChar, sizeof(startingPosChar), "%d,%d,%d", startingPos[0], startingPos[1], startingPos[2]);
-       // send_command(new_socket, try);
-        //send_command(new_socket, startingPosChar);
-        //send_command(new_socket, endPos);
+       
         algorythm(startingPos, endPosInt, 3, 2,new_socket);//tutaj zeby malina dostala jak tylko sie polaczy
         printf("Client connected.\n");
 
@@ -207,14 +204,6 @@ void *tcp_server_thread_function(void *arg) {
                 //send_command(new_socket, startingPosChar);
             }
             
-            
-
-          /*  if (startSet == 1 && endSet == 1) {
-				printf("SocketFd: %d\n",myServerFd);
-               // algorythm(startingPos, endPosInt, 3, 2,myServerFd);
-                //printf("sent to algorithm \n");
-            } */
-
         }
         	 
         
@@ -230,19 +219,7 @@ void *tcp_server_thread_function(void *arg) {
 
 int main() {// zeby dzialalo -> app wybrac potem polaczyc sie z  maliny
     setup();
-    //this was for testing and it worked 
-    
-   /* char shape[]="Circle";
-    int found = check_if_exists_in_db(shape);
-			if (found) {
-			printf("Shape '%s' found in the database.\n", shape);
-			} else {
-			printf("Shape '%s' not found in the database.\n", shape);
-			}
-
-			// Close the database after finishing all operations
-			sqlite3_close(db);*/
-    
+  
     
     pthread_t tcp_server_thread;
 
