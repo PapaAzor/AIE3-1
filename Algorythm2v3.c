@@ -42,36 +42,36 @@ int serverFdInt = atoi(server_fd);
         printf("endPosReceived[%d] = %d\n", i, endPosReceived[i]);
     }
  
-  mapway[1]=endPosReceived[0]-startPosReceived[0];
-  mapway[0]=endPosReceived[1]-startPosReceived[1];
+  mapway[0]=endPosReceived[0]-startPosReceived[0];
+  mapway[1]=endPosReceived[1]-startPosReceived[1];
     
-while(mapway[0]!=0)
+while(mapway[1]!=0)
     {
-     if (mapway[0]>0)
+     if (mapway[1]>0)
      { 
-         mapway[0]=mapway[0]-1;
+         mapway[1]=mapway[1]-1;
          instructions[a]='r';
          a++;
      }
      else
      {
-         mapway[0]=mapway[0]+1;
+         mapway[1]=mapway[1]+1;
          instructions[a]='l';
          a++;   
      }
     }
     
-    while(mapway[1]!=0)
+    while(mapway[0]!=0)
     {
-     if (mapway[1]>0)
+     if (mapway[0]>0)
      {
-         mapway[1]=mapway[1]-1;
+         mapway[0]=mapway[0]-1;
          instructions[a]='d';
          a++;
      }
      else
      {
-         mapway[1]=mapway[1]+1;
+         mapway[0]=mapway[0]+1;
          instructions[a]='u';
          a++;
      }
