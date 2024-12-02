@@ -4,16 +4,6 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-int serverFdInt = atoi(server_fd);
-int mapway[2]={0,0};
-char *startPos = argv[1];
-int startPosReceived[3];
-char *endPos = argv[2];
-int endPosReceived[2];
-char instructions[127]={'0'};
-char drive[127]={'0'};
-int a=0;
-char direction = 'u'; // Initial direction
 
 void send_command(int socket, const char *command) {
     ssize_t bytes_sent = send(socket, command, strlen(command), 0);
@@ -29,7 +19,18 @@ void send_command(int socket, const char *command) {
 
 int main(int argc, char *argv[]) {
 
-      
+
+int mapway[2]={0,0};
+char *startPos = argv[1];
+int startPosReceived[3];
+char *endPos = argv[2];
+char *server_fd=argv[3];
+int endPosReceived[2];
+char instructions[127]={'0'};
+char drive[127]={'0'};
+int a=0;
+char direction = 'u'; // Initial direction   
+int serverFdInt = atoi(server_fd);
 
       for (int i = 0; i<2; i++) {
         startPosReceived[i] = startPos[i]- '0';  // Convert char to int by subtracting '0'
@@ -41,20 +42,20 @@ int main(int argc, char *argv[]) {
         printf("endPosReceived[%d] = %d\n", i, endPosReceived[i]);
     }
  
-  mapway[0]=endPosReceived[0]-startPosReceived[0];
-  mapway[1]=endPosReceived[1]-startPosReceived[1];
+  mapway[1]=endPosReceived[0]-startPosReceived[0];
+  mapway[0]=endPosReceived[1]-startPosReceived[1];
     
 while(mapway[0]!=0)
     {
-     if (mapway[0]<0)
+     if (mapway[0]>0)
      { 
-         mapway[0]=mapway[0]+1;
+         mapway[0]=mapway[0]-1;
          instructions[a]='r';
          a++;
      }
      else
      {
-         mapway[0]=mapway[0]-1;
+         mapway[0]=mapway[0]+1;
          instructions[a]='l';
          a++;   
      }
@@ -65,13 +66,13 @@ while(mapway[0]!=0)
      if (mapway[1]>0)
      {
          mapway[1]=mapway[1]-1;
-         instructions[a]='u';
+         instructions[a]='d';
          a++;
      }
      else
      {
          mapway[1]=mapway[1]+1;
-         instructions[a]='d';
+         instructions[a]='u';
          a++;
      }
     }
@@ -123,6 +124,6 @@ instructions[a]='e';
       printf("ServerFd: %d\n", serverFdInt);
 
     printf("Sending data...\n");
-    send_command(serverFdInt, drive[]);
+    send_command(serverFdInt, instructions);
 return 0;
 }
