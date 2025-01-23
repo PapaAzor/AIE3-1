@@ -4,7 +4,7 @@ import csv
 def movement_control(orzel,pwm1,pwm2):
 	
 	#GPIO.setmode(GPIO.BOARD)
-	dir1_pin= 37
+	dir1_pin= 29
 	dir2_pin = 33			# 1 - RIGHT WHEEL, FORWARD WHEN HIGH
 	pwm1_pin = 35			# 2 - LEFT WHEEL, BACKWARD WHEN HIGH
 	pwm2_pin = 31
@@ -15,10 +15,10 @@ def movement_control(orzel,pwm1,pwm2):
 	timeNew = 0
 	dt = 0
 	k1 = 15
-	k2= 0.3
-	k3 =0.01
-	GPIO.output(dir1_pin,GPIO.HIGH)#right wheel forward when high
-	GPIO.output(dir2_pin,GPIO.LOW) #left wheel forward when low
+	k2= 0.85
+	k3 =0.025
+	GPIO.output(dir1_pin,GPIO.LOW)#LEFT wheel forward when LOW
+	GPIO.output(dir2_pin,GPIO.HIGH) #RIGHT wheel forward when HIGH
 #	csv_file_path = "rotation_errors.csv"
 
 # Open the file in write mode and set up the writer
